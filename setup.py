@@ -14,12 +14,10 @@ import datetime, base64, json, urllib2, \
 from urllib2 import Request, urlopen, HTTPError
 INSTALL_REQUIREMENTS = [
     'datetime',
-    'urllib2',
     'subprocess',
     'sys',
     'simplejson',
     'hashlib',
-    'time'
 ]
 
 setup(
