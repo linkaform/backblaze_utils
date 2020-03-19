@@ -1,8 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import datetime, base64, json, urllib2, \
-       subprocess ,sys, simplejson, hashlib, time
+import datetime, base64, json, urllib2, subprocess ,sys, simplejson, hashlib, time
 
 from urllib2 import Request, urlopen, HTTPError
 
