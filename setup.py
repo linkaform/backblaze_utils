@@ -1,6 +1,5 @@
 import os
 from setuptools import find_packages, setup
-import backblaze_utils
 
 with open(os.path.join(os.path.dirname(__file__), 'README.md')) as readme:
     README = readme.read()
@@ -27,7 +26,7 @@ INSTALL_REQUIREMENTS = [
 
 setup(
     name='backblaze_utils',
-    version=backblaze_utils.__version__,
+    version= '0.1',
     packages=find_packages(),
     include_package_data=True,
     license='BSD License',  # example license
