@@ -1,6 +1,6 @@
 import os
 from setuptools import find_packages, setup
-import lkf_models
+import backblaze_utils
 
 with open(os.path.join(os.path.dirname(__file__), 'README.md')) as readme:
     README = readme.read()
@@ -27,7 +27,7 @@ INSTALL_REQUIREMENTS = [
 
 setup(
     name='backblaze_utils',
-    version=lkf_models.__version__,
+    version=backblaze_utils.__version__,
     packages=find_packages(),
     include_package_data=True,
     license='BSD License',  # example license
