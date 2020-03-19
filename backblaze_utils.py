@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import datetime, base64, json, urllib2, subprocess ,sys, simplejson, hashlib, time
+import datetime, base64, json, urllib2, subprocess ,sys, hashlib, time
 
 from urllib2 import Request, urlopen, HTTPError
 
@@ -68,7 +68,7 @@ class B2():
         req = { 'bucketId' : bucket_id }
         if kwargs:
             req.update(kwargs)
-        return simplejson.dumps(req)
+        return json.dumps(req)
 
     def get_upload_headers(self, bucket_id):
         params = self.get_params(bucket_id)
@@ -144,9 +144,9 @@ class B2():
                 res_files = [ ffile['fileName'] for ffile in results.get('files', [])]
             files.extend(res_files)
             next_file = results.get('nextFileName', None)
-            params = simplejson.loads(params)
+            params = json.loads(params)
             params.update({'startFileName':next_file})
-            params  = simplejson.dumps(params)
+            params  = json.dumps(params)
             pass
         return files
 
@@ -232,7 +232,7 @@ class B2():
         file_path = self.create_tar(dir_name, dir_path)
         tar_name = file_path.strip('/tmp/')
         res = {'file_name':tar_name, 'file_path': file_path, 'count': files_qty}
-        return simplejson.dumps(res)
+        return json.dumps(res)
 
     def backup_user_files(self, user_id, form_id=None, field_id=None, date_from=None, date_to=None):
         today = datetime.date.today()
@@ -247,7 +247,7 @@ class B2():
             url_prefix = 'public-client-{}/'.format(user_id)
             dir_name = str(today.year) + str(today.month) + str(today.day) + '_' + user_id
         else:
-            return simplejson.dumps({'error': 'Incorrect parameters'})
+            return json.dumps({'error': 'Incorrect parameters'})
         if url_prefix:
             #dir_path ='/tmp/' + dir_name
             #command = 'mkdir -p {}'.format(dir_path)
