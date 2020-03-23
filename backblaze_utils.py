@@ -44,13 +44,11 @@ class B2():
             id_and_key = self.B2_ACCOUNT_ID + ':' + self.B2_APPLICATION_KEY
             basic_auth_string = 'Basic ' + self.decode(base64.b64encode(id_and_key.encode('utf-8')))
             headers = {'Authorization' : basic_auth_string}
-            print 'id_and_key',id_and_key
             request = Request(
                 self.AUTH_ACCOUNT_URL,
                 headers = headers
             )
             response = urlopen(request)
-            print 'response', response
             auth_data = json.loads(self.decode(response.read()))
             auth = auth_data
             self.auth['timestamp'] = time.time()
@@ -73,9 +71,7 @@ class B2():
 
     def get_upload_headers(self, bucket_id):
         params = self.get_params(bucket_id)
-        print 'params', params
         upload_keys = self.get_request(self.get_api('b2_get_upload_url'), params)
-        print 'upload_keys',upload_keys
         upload_url = upload_keys.get('uploadUrl')
         upload_token = upload_keys.get('authorizationToken')
         headers = { 'Authorization': upload_token, 'url':upload_url }
@@ -83,17 +79,12 @@ class B2():
 
     def get_request(self, operation, params={}, headers={}):
         req_headers = { 'Authorization': self.get_auth_data() }
-        print 'req_headers',req_headers
-        print 'self account', self.B2_ACCOUNT_ID
         if headers:
             req_headers.update(headers)
         if req_headers.get('url'):
             url = req_headers.pop('url')
         else:
             url = self.get_api(operation)
-        #print "***** url",url
-        #print "***** params",params
-        #print "***** req_headers",req_headers
         request = urllib2.Request(url.encode('utf-8'),
                                       params,
                                       req_headers)
@@ -109,7 +100,6 @@ class B2():
 
         response_data = json.loads(response.read())
         response.close()
-        #print "***** response_data",response_data
         return response_data
 
     def get_files_by_date(self, date_from=None, date_to=None):
@@ -197,7 +187,6 @@ class B2():
     def create_tar(self, file_name, file_path):
         if len(file_path.split('/')) >= 3:
             command = "tar -czvf {}.tar.gz {}".format(file_path, file_path)
-            print 'command',command
             process = subprocess.Popen(command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             output, error = process.communicate()
             command = "rm -rf {}".format(file_path)
@@ -235,14 +224,14 @@ class B2():
                 res +='/' + a
         return res
 
-    def create_thumbnail(file_path=None, file_name=None, size=None):
+    def create_thumbnail(self, file_path=None, file_name=None, size=None):
         """
         Creates a temp thumbnail image and returns its path.
         """
         THUMB_SIZE_V = (90, 141)
         THUMB_SIZE_H = (141, 90)
-        thumb_directory = strip_last(file_path, '/')
-        thumb_path = thumb_directory + strip_last(file_name, '.') +  '.thumbnail'
+        thumb_directory = self.strip_last(file_path, '/')
+        thumb_path = thumb_directory + self.strip_last(file_name, '.') +  '.thumbnail'
         extension = file_name.split('.')[-1]
         im = Image.open(file_path)
         if 'png' in extension.lower():
@@ -265,7 +254,6 @@ class B2():
         command = 'mkdir -p {}'.format(dir_path)
         process = subprocess.Popen(command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         output, error = process.communicate()
-        #print '++++++++++++++ url_list:',url_list
         files_qty = len(url_list)
         self.save_pics(dir_path, url_list)
         file_path = self.create_tar(dir_name, dir_path)
@@ -295,16 +283,6 @@ class B2():
 
             params = self.get_params(self.bucket_id ,**{'prefix':url_prefix, 'maxFileCount':500})
             picutres = self.download_files(self.operation, params)
-            #print '++++++++++++++ picutres:',picutres
-            '''files_qty = len(picutres)
-            print 'aqtyu', files_qty
-            self.save_pics(user_id, dir_path, picutres)
-            print 'save dir_path', dir_path
-            file_path = self.create_tar(dir_name, dir_path)
-            tar_name = file_path.strip('/tmp/')
-            print 'file_path', file_path
-            res = {'file_name':tar_name, 'file_path': file_path, 'count': files_qty}
-            return simplejson.dumps(res)'''
             return self.generate_tar_with_files(dir_name, picutres)
 
     def backup_files_by_url_list(self, url_list):
