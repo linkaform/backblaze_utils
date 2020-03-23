@@ -4,6 +4,7 @@
 import datetime, base64, json, urllib2, subprocess ,sys, hashlib, time
 
 from urllib2 import Request, urlopen, HTTPError
+from PIL import Image
 
 
 
@@ -206,7 +207,7 @@ class B2():
         else:
             return 'File path must be greater than 3, actual file path', file_path
 
-    def upload_file_b2(self, user_id, file_name, file_path):
+    def upload_file_b2(self, user_id, file_name, file_path, thumbnail=False):
         file_name = "public-client-{}/{}".format(user_id, file_name)
         file_data = open(file_path).read()
         sha1_of_file_data = hashlib.sha1(file_data).hexdigest()
@@ -217,9 +218,47 @@ class B2():
             }
         headers.update(self.get_upload_headers(self.bucket_id))
         #tiene q regrearme un header con authorization y url
-        res = self.get_request(self.upload_file, file_data, headers )
+        for idx in range(10):
+            res = self.get_request(self.upload_file, file_data, headers )
+            if res:break
+            time.sleep(2)
+        if not res:
+            return None
         file_url = self.b2_url_base + res.get('fileName','')
         return file_url
+
+
+    def strip_last(self, value, split_by):
+        res = ''
+        for a in value.split(split_by)[0:len(value.split(split_by))-1]:
+            if a:
+                res +='/' + a
+        return res
+
+    def create_thumbnail(file_path=None, file_name=None, size=None):
+        """
+        Creates a temp thumbnail image and returns its path.
+        """
+        THUMB_SIZE_V = (90, 141)
+        THUMB_SIZE_H = (141, 90)
+        thumb_directory = strip_last(file_path, '/')
+        thumb_path = thumb_directory + strip_last(file_name, '.') +  '.thumbnail'
+        extension = file_name.split('.')[-1]
+        im = Image.open(file_path)
+        if 'png' in extension.lower():
+            im.convert('RGBA')
+        else:
+            im.convert('RGB')
+        (width, height) = im.size
+        if size:
+            im.thumbnail(size, Image.ANTIALIAS)
+        elif width >= height:
+            im.thumbnail(THUMB_SIZE_H, Image.ANTIALIAS)
+        else:
+            im.thumbnail(THUMB_SIZE_V, Image.ANTIALIAS)
+        ext = 'PNG' if 'png' in extension.lower() else 'JPEG'
+        im.save(thumb_path, ext)
+        return thumb_path if file_path else im
 
     def generate_tar_with_files(self, dir_name, url_list):
         dir_path ='/tmp/' + dir_name
