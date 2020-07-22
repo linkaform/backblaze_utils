@@ -23,7 +23,7 @@ class B2():
         self.expiration = time.time() + self.duartion
         self.api_url = 'https://api001.backblazeb2.com'
         self.operation = 'b2_list_file_names'
-        self.upload_file = 'b2_upload_file' 
+        self.upload_file = 'b2_upload_file'
 
     def decode(self, m):
         return m.decode('utf-8')
@@ -40,7 +40,8 @@ class B2():
         if (self.auth.get('timestamp') + self.duartion) > self.expiration \
             and self.auth.get('self.authorizationToken'):
             return auth.get('authorizationToken')
-        try:
+        #try:
+        if True:
             id_and_key = self.B2_ACCOUNT_ID + ':' + self.B2_APPLICATION_KEY
             basic_auth_string = 'Basic ' + self.decode(base64.b64encode(id_and_key.encode('utf-8')))
             headers = {'Authorization' : basic_auth_string}
@@ -55,8 +56,8 @@ class B2():
             account_authorization_token = auth_data.get('authorizationToken')
             response.close()
             return account_authorization_token
-        except (HTTPError, Exception), e:
-            return None
+        #except (HTTPError, Exception), e:
+        #    return None
 
     def get_api(self, operation):
         if "://" in operation:
@@ -89,16 +90,17 @@ class B2():
                                       params,
                                       req_headers)
         for i in range(10):
-            try:
+            #try:
                 response = urllib2.urlopen(request)
                 if response: break
                 print 'sleeeeep zzzz'
                 sleep(2+idx)
-            except Exception, e:
-                print 'UPLOAD FILE ERROR=',e
-                return None
+            #except Exception, e:
+            #    print 'UPLOAD FILE ERROR=',e
+            #    return None
 
         response_data = json.loads(response.read())
+        print 'response_data=',response_data
         response.close()
         return response_data
 
@@ -149,7 +151,7 @@ class B2():
                     continue
             res.append(self.b2_url_base + ffile)
         return res
-
+        
     def pic_path(self, user_id, file_path, picture_path):
         dir_path = ''
         prefix = 'public-client-{}/'.format(user_id)
@@ -197,7 +199,11 @@ class B2():
             return 'File path must be greater than 3, actual file path', file_path
 
     def upload_file_b2(self, file_name, file_path):
-        file_data = open(file_path).read()
+        try:
+            file_data = open(file_path).read()
+        except IOError:
+            print 'file not found'
+            return None
         sha1_of_file_data = hashlib.sha1(file_data).hexdigest()
         headers = {
             'Content-Type' : "text/plain",
@@ -259,13 +265,13 @@ class B2():
         self.upload_file_b2(thumb_name, thumb_path) 
         return thumb_path if file_path else im
 
-    def generate_tar_with_files(self, dir_name, url_list):
+    def generate_tar_with_files(self, user_id, dir_name, url_list):
         dir_path ='/tmp/' + dir_name
         command = 'mkdir -p {}'.format(dir_path)
         process = subprocess.Popen(command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         output, error = process.communicate()
         files_qty = len(url_list)
-        self.save_pics(dir_path, url_list)
+        self.save_pics(user_id, dir_path, url_list)
         file_path = self.create_tar(dir_name, dir_path)
         tar_name = file_path.strip('/tmp/')
         res = {'file_name':tar_name, 'file_path': file_path, 'count': files_qty}
@@ -273,7 +279,7 @@ class B2():
 
     def backup_user_files(self, user_id, form_id=None, field_id=None, date_from=None, date_to=None):
         today = datetime.date.today()
-
+        print 'today', today
         if form_id and field_id:
             url_prefix = 'public-client-{}/{}/{}/'.format(user_id, form_id, field_id)
             dir_name = str(today.year) + str(today.month) + str(today.day) + '_' + user_id + '_' + form_id + '_' + field_id
@@ -292,13 +298,14 @@ class B2():
             #output, error = process.communicate()
 
             params = self.get_params(self.bucket_id ,**{'prefix':url_prefix, 'maxFileCount':500})
+            print 'params', params
             picutres = self.download_files(self.operation, params)
-            return self.generate_tar_with_files(dir_name, picutres)
+            return self.generate_tar_with_files(user_id, dir_name, picutres)
 
-    def backup_files_by_url_list(self, url_list):
+    def backup_files_by_url_list(self, uesr_id, url_list):
         today = datetime.date.today()
         dir_name = str(today.year) + str(today.month) + str(today.day)
-        return self.generate_tar_with_files(dir_name, url_list)
+        return self.generate_tar_with_files(user_id, dir_name, url_list)
 
     def bash_upload_file(self, argv):
         form_id, field_id = None
@@ -315,6 +322,4 @@ class B2():
         else:
             print 'NO parameters recived'
         return self.backup_user_files(user_id, form_id, field_id)
-
-
 

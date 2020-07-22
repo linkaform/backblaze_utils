@@ -6,6 +6,8 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 INSTALL_REQUIREMENTS = [
     'simplejson',
+    'Pillow'
+
 ]
 
 setup(
