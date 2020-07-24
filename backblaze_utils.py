@@ -40,8 +40,7 @@ class B2():
         if (self.auth.get('timestamp') + self.duartion) > self.expiration \
             and self.auth.get('self.authorizationToken'):
             return auth.get('authorizationToken')
-        #try:
-        if True:
+        try:
             id_and_key = self.B2_ACCOUNT_ID + ':' + self.B2_APPLICATION_KEY
             basic_auth_string = 'Basic ' + self.decode(base64.b64encode(id_and_key.encode('utf-8')))
             headers = {'Authorization' : basic_auth_string}
@@ -56,8 +55,8 @@ class B2():
             account_authorization_token = auth_data.get('authorizationToken')
             response.close()
             return account_authorization_token
-        #except (HTTPError, Exception), e:
-        #    return None
+        except (HTTPError, Exception), e:
+            return None
 
     def get_api(self, operation):
         if "://" in operation:
@@ -90,35 +89,35 @@ class B2():
                                       params,
                                       req_headers)
         for i in range(10):
-            #try:
+            try:
                 response = urllib2.urlopen(request)
                 if response: break
                 print 'sleeeeep zzzz'
                 sleep(2+idx)
-            #except Exception, e:
-            #    print 'UPLOAD FILE ERROR=',e
-            #    return None
+            except Exception, e:
+                print 'UPLOAD FILE ERROR=',e
+                return None
 
         response_data = json.loads(response.read())
-        print 'response_data=',response_data
+        #print 'response_data=',response_data
         response.close()
         return response_data
 
-    def get_files_by_date(self, date_from=None, date_to=None):
+    def get_files_by_date(self, results, date_from=None, date_to=None):
         if date_from:
             timestamp_from = int(datetime.datetime.strptime(date_from, '%Y-%m-%d').strftime("%s"))
         if date_to:
             timestamp_to = int(datetime.datetime.strptime(date_to, '%Y-%m-%d').strftime("%s"))
 
         res_files = []
-        
         for ffile in results.get('files', []):
             if ffile.get('uploadTimestamp'):
+                tt = ffile.get('uploadTimestamp')/1000
                 if date_from and not date_to:
-                    if ffile.get('uploadTimestamp') > timestamp_from:
+                    if tt > timestamp_from:
                         res_files.append(ffile['fileName'])
                 elif date_to and not date_from:
-                    if ffile.get('uploadTimestamp') < timestamp_to:
+                    if tt < timestamp_to:
                        res_files.append(ffile['fileName'])
                 elif date_to and date_from:
                     if tt > timestamp_from and \
@@ -129,10 +128,12 @@ class B2():
     def get_files(self, operation, params, date_from=None, date_to=None):
         next_file = True
         files = []
+        total_pics = 0
         while next_file :
             results = self.get_request(operation, params)
+            total_pics += len(results.get('files', []))
             if date_from or date_to:
-                res_files = self.get_files_by_date(date_from, date_to)
+                res_files = self.get_files_by_date(results, date_from, date_to)
             else:
                 res_files = [ ffile['fileName'] for ffile in results.get('files', [])]
             files.extend(res_files)
@@ -141,17 +142,22 @@ class B2():
             params.update({'startFileName':next_file})
             params  = json.dumps(params)
             pass
+        print 'toal_files=', total_pics
         return files
 
-    def download_files(self, operation, params,  drop_thumbnails=True, date_from=None, date_to=None):
+    def download_files(self, operation, params,  drop_thumbnails=True, date_from=None, date_to=None, drop_logs=True):
         res = []
-        for ffile in self.get_files(operation, params, date_from=None, date_to=None):
+        for ffile in self.get_files(operation, params, date_from=date_from, date_to=date_to):
             if drop_thumbnails:
                 if ffile.split('.')[-1] == 'thumbnail':
                     continue
+            if drop_logs:
+                if ffile.split('.')[-1] == 'log':
+                    continue
+
             res.append(self.b2_url_base + ffile)
         return res
-        
+
     def pic_path(self, user_id, file_path, picture_path):
         dir_path = ''
         prefix = 'public-client-{}/'.format(user_id)
@@ -199,6 +205,7 @@ class B2():
             return 'File path must be greater than 3, actual file path', file_path
 
     def upload_file_b2(self, file_name, file_path):
+        print '.. upload_file_b2', file_name
         try:
             file_data = open(file_path).read()
         except IOError:
@@ -221,7 +228,6 @@ class B2():
             return None
         file_url = self.b2_url_base + res.get('fileName','')
         return file_url
-
 
     def strip_last(self, value, split_by):
         res = ''
@@ -278,8 +284,14 @@ class B2():
         return json.dumps(res)
 
     def backup_user_files(self, user_id, form_id=None, field_id=None, date_from=None, date_to=None):
+        print 'backup_user_files22'
         today = datetime.date.today()
         print 'today', today
+        print 'user_id',user_id
+        print 'form_id', form_id
+        print 'field_id', field_id
+        print 'date_to', date_to
+        print 'date_from', date_from
         if form_id and field_id:
             url_prefix = 'public-client-{}/{}/{}/'.format(user_id, form_id, field_id)
             dir_name = str(today.year) + str(today.month) + str(today.day) + '_' + user_id + '_' + form_id + '_' + field_id
@@ -297,10 +309,11 @@ class B2():
             #process = subprocess.Popen(command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             #output, error = process.communicate()
 
-            params = self.get_params(self.bucket_id ,**{'prefix':url_prefix, 'maxFileCount':500})
-            print 'params', params
-            picutres = self.download_files(self.operation, params)
-            return self.generate_tar_with_files(user_id, dir_name, picutres)
+            params = self.get_params(self.bucket_id ,**{'prefix':url_prefix, 'maxFileCount':1000})
+            #print 'params', params
+            pictures = self.download_files(self.operation, params, drop_thumbnails=True, date_from=date_from, date_to=date_to)
+            #print 'picutres=', pictures
+            return self.generate_tar_with_files(user_id, dir_name, pictures)
 
     def backup_files_by_url_list(self, uesr_id, url_list):
         today = datetime.date.today()
