@@ -1,5 +1,6 @@
 import os
 from setuptools import find_packages, setup
+import backblaze_utils
 
 # allow setup.py to be run from any path
 os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
@@ -7,18 +8,17 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 INSTALL_REQUIREMENTS = [
     'simplejson',
     'Pillow'
-
 ]
 
 setup(
     name='backblaze_utils',
-    version= '0.1',
+    version=backblaze_utils.__version__,
     packages=find_packages(),
     include_package_data=True,
     license='BSD License',  # example license
-    description='Backblze Utils',
+    description='Backblaze Utils',
     url='https://app.linkaform.com/',
-    author='LikaForm',
+    author='LinkaForm',
     author_email='develop@linkaform.com',
     classifiers=[
         'Environment :: Web Environment',
