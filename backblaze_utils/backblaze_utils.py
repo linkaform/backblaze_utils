@@ -1,15 +1,10 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import datetime, base64, json, urllib2, subprocess ,sys, hashlib, time
-
+import datetime, base64, json, urllib2, subprocess, sys, hashlib, time
 from urllib2 import Request, urlopen, HTTPError
 from PIL import Image
 
-
-
 class B2():
-
 
     def __init__(self):
         self.B2_ACCOUNT_ID = None
@@ -37,8 +32,7 @@ class B2():
         """
         # Check if the token is still valid
 
-        if (self.auth.get('timestamp') + self.duartion) > self.expiration \
-            and self.auth.get('self.authorizationToken'):
+        if (self.auth.get('timestamp') + self.duartion) > self.expiration and self.auth.get('self.authorizationToken'):
             return auth.get('authorizationToken')
         try:
             id_and_key = self.B2_ACCOUNT_ID + ':' + self.B2_APPLICATION_KEY
@@ -335,4 +329,3 @@ class B2():
         else:
             print 'NO parameters recived'
         return self.backup_user_files(user_id, form_id, field_id)
-
