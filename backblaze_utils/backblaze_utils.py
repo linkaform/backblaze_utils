@@ -288,13 +288,13 @@ class B2():
         print 'date_from', date_from
         if form_id and field_id:
             url_prefix = 'public-client-{}/{}/{}/'.format(user_id, form_id, field_id)
-            dir_name = str(today.year) + str(today.month) + str(today.day) + '_' + user_id + '_' + form_id + '_' + field_id
+            dir_name = '{}{}{}_{}_{}_{}'.format(today.year, today.month, today.day, user_id, form_id, field_id)
         elif form_id:
             url_prefix =  'public-client-{}/{}/'.format(user_id, form_id)
-            dir_name = str(today.year) + str(today.month) + str(today.day) + '_' + user_id + '_' + form_id
+            dir_name = '{}{}{}_{}_{}'.format(today.year, today.month, today.day, user_id, form_id)
         elif user_id:
             url_prefix = 'public-client-{}/'.format(user_id)
-            dir_name = str(today.year) + str(today.month) + str(today.day) + '_' + user_id
+            dir_name = '{}{}{}_{}'.format(today.year, today.month, today.day, user_id)
         else:
             return json.dumps({'error': 'Incorrect parameters'})
         if url_prefix:
